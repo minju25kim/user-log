@@ -21,7 +21,7 @@ const createUser = async (username) => {
 };
 
 const getUser = async () => {
-  const allUser = await User.find({});
+  const allUser = await User.find({}).select("_id name");
   return allUser;
 };
 
