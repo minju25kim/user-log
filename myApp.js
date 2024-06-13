@@ -3,13 +3,11 @@ require("dotenv").config();
 const mongoose = require("mongoose");
 mongoose.connect(process.env.MONGO_URI);
 
-const exerciseLogSchema = new mongoose.Schema(
-  {
-    description: String,
-    duration: Number,
-    date: Date,
-  }
-);
+const exerciseLogSchema = new mongoose.Schema({
+  description: String,
+  duration: Number,
+  date: Date,
+});
 
 const userSchema = new mongoose.Schema({
   username: {
@@ -46,20 +44,22 @@ const saveExercise = async (id, exercise) => {
   // find user by id
   const idUser = await User.findById(id);
   // SAVE THE EXERCISE IN THE LOG ARRAY IN USER
-  idUser.log.push({
-    description: description,
-    duration: duration,
+  const newExercise = {
+    description,
+    duration,
     date: date ? new Date(date) : new Date(),
-  });
+  };
+  idUser.log.push(newExercise);
   await idUser.save();
   // CREATE THE EXERCISE OBJ TO SEND THE RESPONSE JSON
   const exerciseObj = {
     username: idUser.username,
-    description: description,
-    duration: duration,
-    date: date ? new Date(date).toDateString() : new Date().toDateString(),
-    _id: id,
+    description: newExercise.description,
+    duration: newExercise.duration,
+    date: newExercise.date.toDateString(),
+    _id: idUser._id,
   };
+
   return exerciseObj;
 };
 
