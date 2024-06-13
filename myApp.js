@@ -6,7 +6,7 @@ mongoose.connect(process.env.MONGO_URI);
 const exerciseLogSchema = new mongoose.Schema({
   description: String,
   duration: Number,
-  date: Date,
+  date: String,
 });
 
 const userSchema = new mongoose.Schema({
@@ -26,8 +26,9 @@ const createUser = async (username) => {
   const newUser = new User({
     username: username,
   });
-  const createdUser = await newUser.save();
-  return createdUser;
+  const savedUser = await newUser.save();
+  const createdUser = JSON.parse(JSON.stringify(savedUser));
+  return { _id: createdUser._id, username: createdUser.username };
 };
 
 const getUser = async () => {
@@ -35,34 +36,52 @@ const getUser = async () => {
   return allUser;
 };
 
-const saveExercise = async (id, exercise) => {
+const saveUserExercise = async (id, exercise) => {
   const { description, duration, date } = exercise;
-  // ID VALIDATION
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    return { error: "Invalid user ID format" };
+  if (!description || !duration) {
+    throw new Error("Description or duration or both are missing");
   }
-  // find user by id
-  const idUser = await User.findById(id);
-  // SAVE THE EXERCISE IN THE LOG ARRAY IN USER
-  const newExercise = {
-    description,
-    duration,
-    date: date ? new Date(date) : new Date(),
-  };
-  idUser.log.push(newExercise);
-  await idUser.save();
-  // CREATE THE EXERCISE OBJ TO SEND THE RESPONSE JSON
-  const exerciseObj = {
-    username: idUser.username,
-    description: newExercise.description,
-    duration: newExercise.duration,
-    date: newExercise.date.toDateString(),
-    _id: idUser._id,
-  };
+  try {
+    const user = await User.findById(id);
+    if (!user) {
+      throw new Error(`User with id ${id} not found`);
+    }
+    user.log.push({
+      description: description,
+      duration: parseInt(duration),
+      date: date ? new Date(date).toDateString() : new Date().toDateString(),
+    });
+    user.count = user.log.length;
+    await user.save();
+    const exerciseObj = {
+      _id: user._id,
+      username: user.username,
+      description: description,
+      duration: parseInt(duration),
+      date: date ? new Date(date).toDateString() : new Date().toDateString(),
+    };
+    return exerciseObj;
+  } catch (error) {
+    throw new Error(`Failed to save exercise: ${error.message}`);
+  }
+};
 
-  return exerciseObj;
+const getUserLogs = async (id) => {
+  //   const { from, to, limit } = query;
+  const user = await User.findById(id);
+  //   const filteredLogs = user.log.filter((log) => {
+  //     return (
+  //       new Date(log.date) < new Date(to) && new Date(log.date) > new Date(from)
+  //     );
+  //   });
+  //   const limitedLogs = limit ? filteredLogs.slice(0, limit) : filteredLogs;
+  //   user.log = limitedLogs;
+
+  //   console.log(user.log);
+  return user;
 };
 
 exports.createUser = createUser;
 exports.getUser = getUser;
-exports.saveExercise = saveExercise;
+exports.saveUserExercise = saveUserExercise;
+exports.getUserLogs = getUserLogs;

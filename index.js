@@ -16,10 +16,10 @@ app.get("/", (req, res) => {
 });
 
 const createUser = require("./myApp.js").createUser;
-app.post("/api/users", function (req, res) {
+app.post("/api/users", async function (req, res) {
   const username = req.body.username;
-  createUser(username);
-  res.json({ _id: "id here", username: username });
+  const userObj = await createUser(username);
+  res.json(userObj);
 });
 
 const getUser = require("./myApp.js").getUser;
@@ -28,12 +28,34 @@ app.get("/api/users", async function (req, res) {
   res.json(allUser);
 });
 
-const saveExercise = require("./myApp.js").saveExercise;
-app.post("/api/users/:_id/exercises", async function (req, res) {
-  // save the req.body under the user's _id in mongodb;
-  const exerciseObj = await saveExercise(req.params._id, req.body);
-  // send the res with what it's just saved in users exercise log
-  res.json(exerciseObj);
+const saveUserExercise = require("./myApp.js").saveUserExercise;
+app.post("/api/users/:_id/exercises", async function (req, res, next) {
+  try {
+    const result = await saveUserExercise(req.params._id, req.body);
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+});
+
+const getUserLogs = require("./myApp.js").getUserLogs;
+app.get("/api/users/:_id/logs", async function (req, res, next) {
+  try {
+    const result = await getUserLogs(req.params._id, req.query);
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ERROR HANDLER
+app.use(function (err, req, res, next) {
+  if (err) {
+    res
+      .status(err.status || 500)
+      .type("txt")
+      .send(err.message || "SERVER ERROR");
+  }
 });
 
 const listener = app.listen(process.env.PORT || 3000, function () {
