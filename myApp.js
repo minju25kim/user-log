@@ -8,8 +8,7 @@ const exerciseLogSchema = new mongoose.Schema(
     description: String,
     duration: Number,
     date: Date,
-  },
-  { _id: false }
+  }
 );
 
 const userSchema = new mongoose.Schema({
