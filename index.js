@@ -28,6 +28,14 @@ app.get("/api/users", async function (req, res) {
   res.json(allUser);
 });
 
+const saveExercise = require("./myApp.js").saveExercise;
+app.post("/api/users/:_id/exercises", async function (req, res) {
+  // save the req.body under the user's _id in mongodb;
+  const exerciseObj = await saveExercise(req.params._id, req.body);
+  // send the res with what it's just saved in users exercise log
+  res.json(exerciseObj);
+});
+
 const listener = app.listen(process.env.PORT || 3000, function () {
   console.log(
     "Your app is listening on port " +
