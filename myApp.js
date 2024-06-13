@@ -40,6 +40,11 @@ const getUser = async () => {
 
 const saveExercise = async (id, exercise) => {
   const { description, duration, date } = exercise;
+  // ID VALIDATION
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).send({ error: "Invalid user ID format" });
+  }
+  // find user by id
   const idUser = await User.findById(id);
   // SAVE THE EXERCISE IN THE LOG ARRAY IN USER
   idUser.log.push({
